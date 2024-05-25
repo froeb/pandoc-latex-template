@@ -1,0 +1,1684 @@
+%%
+% Copyright (c) 2017 - 2023, Pascal Wagler;
+% Copyright (c) 2014 - 2023, John MacFarlane
+%
+% All rights reserved.
+%
+% Redistribution and use in source and binary forms, with or without
+% modification, are permitted provided that the following conditions
+% are met:
+%
+% - Redistributions of source code must retain the above copyright
+% notice, this list of conditions and the following disclaimer.
+%
+% - Redistributions in binary form must reproduce the above copyright
+% notice, this list of conditions and the following disclaimer in the
+% documentation and/or other materials provided with the distribution.
+%
+% - Neither the name of John MacFarlane nor the names of other
+% contributors may be used to endorse or promote products derived
+% from this software without specific prior written permission.
+%
+% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+% "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+% LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+% FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+% COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+% INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+% BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+% LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+% CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+% LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+% ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+% POSSIBILITY OF SUCH DAMAGE.
+%%
+
+%%
+% This is the Eisvogel pandoc LaTeX template.
+%
+% For usage information and examples visit the official GitHub page:
+% https://github.com/Wandmalfarbe/pandoc-latex-template
+%%
+
+% ----------------------------------------------------------------------
+% Options for packages loaded elsewhere
+% ----------------------------------------------------------------------
+\PassOptionsToPackage{unicode$for(hyperrefoptions)$,$hyperrefoptions$$endfor$}{hyperref} % Pass options to hyperref package
+\PassOptionsToPackage{hyphens}{url} % Pass options to url package
+\PassOptionsToPackage{dvipsnames,svgnames,x11names,table}{xcolor} % Pass options to xcolor package
+$if(CJKmainfont)$
+\PassOptionsToPackage{space}{xeCJK} % Pass options to xeCJK package if CJKmainfont is defined
+$endif$
+
+% ----------------------------------------------------------------------
+% Document Class
+% ----------------------------------------------------------------------
+\documentclass[
+  $if(fontsize)$
+    $fontsize$,
+  $endif$
+  $if(papersize)$
+    $papersize$paper,
+  $else$
+    paper=a4,
+  $endif$
+  $if(beamer)$
+    ignorenonframetext,
+    $if(handout)$
+      handout,
+    $endif$
+    $if(aspectratio)$
+      aspectratio=$aspectratio$,
+    $endif$
+  $endif$
+  $for(classoption)$
+    $classoption$$sep$,
+  $endfor$
+  captions=tableheading
+]{$if(beamer)$$documentclass$$else$$if(book)$scrbook$else$scrartcl$endif$$endif$}
+
+% ----------------------------------------------------------------------
+% Start Beamer-Specific Configurations
+% ----------------------------------------------------------------------
+$if(beamer)$
+
+$if(beamerarticle)$
+  \usepackage{beamerarticle} % needs to be loaded first
+$endif$
+
+% ----------------------------------------------------------------------
+% Beamer - Helper
+% ----------------------------------------------------------------------
+\newif\ifbibliography % Conditional variable to check if in bibliography section (Beamer)
+
+% ----------------------------------------------------------------------
+% Beamer -  Background Image
+% ----------------------------------------------------------------------
+$if(background-image)$
+  \usebackgroundtemplate{%
+    \includegraphics[width=\paperwidth]{$background-image$}%
+  }
+  % In beamer background-image does not work well when other images are used, so this is the workaround
+  \pgfdeclareimage[width=\paperwidth,height=\paperheight]{background}{$background-image$}
+  \usebackgroundtemplate{\pgfuseimage{background}}
+$endif$
+
+% ----------------------------------------------------------------------
+% Beamer - Package and General Settings
+% ----------------------------------------------------------------------
+\usepackage{pgfpages}
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{caption label separator}{: }
+\setbeamercolor{caption name}{fg=normal text.fg}
+\beamertemplatenavigationsymbols$if(navigation)$$navigation$$else$empty$endif$
+$for(beameroption)$
+  \setbeameroption{$beameroption$}
+$endfor$
+\widowpenalties 1 10000
+\raggedbottom
+
+% ----------------------------------------------------------------------
+% Beamer - Navigation Symbols
+% ----------------------------------------------------------------------
+\setbeamertemplate{navigation symbols}{}
+
+% ----------------------------------------------------------------------
+% Beamer - Slide Break and TOC Configuration
+% ----------------------------------------------------------------------
+\makeatletter
+\def\beamer@writeslidentry@pagenumber#1{%
+  \ifbeamer@inlecture%
+  \expandafter\gdef\csname @@toc@slide@number\space#1\endcsname{\number\beamer@slideinframe}%
+  \fi}
+\def\beamer@writeslidentry@emptypagenumber#1{}
+$if(toc-own-page)$
+\setbeamertemplate{section in toc}[sections numbered]
+\setbeamertemplate{slide entry}{
+  \beamer@writeslidentry@pagenumber{\insertframenumber}%
+  \insertslideintonotes}
+$else$
+\setbeamertemplate{slide entry}{
+  \beamer@writeslidentry@emptypagenumber{\insertframenumber}%
+  \insertslideintonotes}
+$endif$
+\makeatother
+
+% ----------------------------------------------------------------------
+% Beamer - Part, Section, and Subsection Pages
+% ----------------------------------------------------------------------
+$if(section-titles)$
+\setbeamertemplate{part page}{
+  \centering
+  \begin{beamercolorbox}[sep=16pt,center]{part title}
+    \usebeamerfont{part title}\insertpart\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{section page}{
+  \centering
+  \begin{beamercolorbox}[sep=12pt,center]{part title}
+    \usebeamerfont{section title}\insertsection\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{subsection page}{
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center]{part title}
+    \usebeamerfont{subsection title}\insertsubsection\par
+  \end{beamercolorbox}
+}
+\AtBeginPart{
+  \frame{\partpage}
+}
+\AtBeginSection{
+  \ifbibliography
+  \else
+    \frame{\sectionpage}
+  \fi
+}
+\AtBeginSubsection{
+  \frame{\subsectionpage}
+}
+$endif$
+
+% ----------------------------------------------------------------------
+% Beamer - Title Page and Frame Title Configuration
+% ----------------------------------------------------------------------
+\setbeamertemplate{title page}{
+  \begin{frame}[plain]
+    \titlepage
+  \end{frame}
+}
+
+$if(titlepage)$
+\defbeamertemplate*{title page}{customized}[1][]{%
+  \usebeamertemplate{background canvas}
+  \ifbeamercolorempty[bg]{frametitle}{}{\nointerlineskip}%
+  \begin{beamercolorbox}[sep=12pt,center]{frametitle}
+    \ifbeamercolornotfield{subtitle}{}%
+    {%
+      \usebeamerfont{subtitle}\inserttitle. \insertsubtitle\par%
+    }%
+    \ifx\insertinstitute\@empty\relax\else%
+    \usebeamerfont{institute}\insertinstitute\par%
+    \fi%
+    \usebeamerfont{author}\insertauthor\par
+    \usebeamerfont{date}\insertdate\par
+  \end{beamercolorbox}
+  \usebeamertemplate{titlegraphic}
+  \usebeamertemplate{logo}
+}
+\setbeamertemplate{title page}[default][colsep=-4bp,rounded=true,shadow=true]
+$endif$
+
+\makeatletter
+\setbeamertemplate{frametitle}{
+  \nointerlineskip
+  \begin{beamercolorbox}[sep=0pt,ht=2.25ex,dp=1ex,leftskip=.3cm,rightskip=.3cm plus1fil]{frametitle}
+    \usebeamerfont*{frametitle}%
+    \insertframetitle
+    \ifx\insertframesubtitle\@empty%
+    \else
+      {\usebeamerfont*{framesubtitle}{\insertframesubtitle}\strut\par}%
+    \fi%%
+  \end{beamercolorbox}%
+}
+\makeatother
+
+% ----------------------------------------------------------------------
+% Beamer - Figure and Caption Configuration
+% ----------------------------------------------------------------------
+\makeatletter
+\setbeamertemplate{figure}{
+  \begin{center}
+    \begin{minipage}[c]{\linewidth}
+      \centering
+      \usebeamertemplate***{caption}
+      \vskip\abovecaptionskip
+      \usebeamertemplate***{includegraphics}
+      \vskip\belowcaptionskip
+    </end{minipage>
+  \end{center}
+}
+\makeatother
+
+% Add space between caption and content in figures
+$if(fig-captions-above)$
+\setbeamertemplate{caption}[above]
+$endif$
+$if(table-captions-above)$
+\setbeamertemplate{caption}[above]
+$endif$
+$if(caption-font-size)$
+\setbeamerfont{caption}{size={$caption-font-size$}}
+$endif$
+
+% ----------------------------------------------------------------------
+% Beamer - Customizing Blockquotes, Items, and Blocks
+% ----------------------------------------------------------------------
+$if(quote-block-font-size)$
+\setbeamerfont{quote text}{size={$quote-block-font-size$}}
+$endif$
+
+\makeatletter
+\setlength{\topsep}{0pt}
+\setlength{\partopsep}{0pt}
+\setbeamertemplate{itemize/enumerate body}{
+  \vspace{-.5\topsep}
+  \list
+    {\usebeamertemplate{itemize item}[square]}
+    {\usebeamerfont{itemize/enumerate body}%
+      \usebeamercolor[fg]{itemize item}%
+      \usebeamertemplate{itemize item}}
+  \vspace{-\parskip}\vspace{-.5\topsep}
+}
+\setbeamertemplate{block body}{
+  \vspace{-.5\topsep}
+  \usebeamercolor[bg]{block body}
+  \vrule width \beamer@leftmargini
+  \vrule width \beamer@rightmargini
+  \vbox to .9\beamer@blockbodyheight{%
+    \vfil
+    \hcbox{\parbox[t][\beamer@blockbodyheight]{\dimexpr\beamer@blockbodywidth-2\beamer@boxsizei}{
+        \ifbeamercolorempty[bg]{block body}{}{\vskip\beamer@blocksep penalties}\ifbeamercolorempty[bg]{block title}{}{\vskip\beamer@blocksep penalties}\strut\insertblockbody\strut}}
+    \vfil}%
+  \vrule width \beamer@leftmargini
+  \vrule width \beamer@rightmargini
+  \vspace{-\parskip}\vspace{-.5\topsep}
+}
+\makeatother
+
+% ----------------------------------------------------------------------
+% Beamer - Bibliography and Heading Configuration
+% ----------------------------------------------------------------------
+\makeatletter
+\patchcmd{\beamer@printbibliographydefault}
+  {\vskip0pt}
+  {\vskip-\parskip}
+  {}
+  {}
+\makeatother
+
+\setbeamercolor{section in head/foot}{fg=heading-color, bg=White}
+
+$endif$ % End of Beamer-Specific Configurations
+% ----------------------------------------------------------------------
+% End Beamer-Specific Configurations
+% ----------------------------------------------------------------------
+
+% ----------------------------------------------------------------------
+% Essential Packages (Always Loaded)
+% ----------------------------------------------------------------------
+\usepackage{amsmath,amssymb}     % Math symbols and environments
+\usepackage{iftex}               % Conditional loading based on engine
+\usepackage{etoolbox}            % Utility package for LaTeX
+
+% Check if packages are loaded successfully
+\makeatletter
+\@ifpackageloaded{amsmath}{}{\PackageError{pandoc}{The `amsmath` package failed to load}{}}
+\@ifpackageloaded{amssymb}{}{\PackageError{pandoc}{The `amssymb` package failed to load}{}}
+\@ifpackageloaded{iftex}{}{\PackageError{pandoc}{The `iftex` package failed to load}{}}
+\@ifpackageloaded{etoolbox}{}{\PackageError{pandoc}{The `etoolbox` package failed to load}{}}
+\makeatother
+
+% Load fontspec only if not using PDFTeX
+\ifPDFTeX
+  % Additional settings for PDFTeX can go here
+\else
+  \usepackage{fontspec}           % Font management (XeTeX/LuaTeX)
+  \makeatletter
+  \@ifpackageloaded{fontspec}{}{\PackageError{pandoc}{The `fontspec` package failed to load}{}}
+  \makeatother
+\fi
+\usepackage[export]{adjustbox}   % Image resizing/adjustment
+\usepackage{graphicx}            % Image handling (PNG, JPG, PDF)
+\usepackage{svg}                 % SVG image handling
+\usepackage{hyperref}            % Hyperlinks and bookmarks
+\usepackage{microtype}           % Fine-grained typography adjustments
+\usepackage{pgfplots}            % Plotting and graphs
+\usepackage{url}                 % Formatting URLs
+\usepackage{parskip}             % Paragraph spacing
+
+% Check if packages are loaded successfully (continued)
+\makeatletter
+\@ifpackageloaded{adjustbox}{}{\PackageError{pandoc}{The `adjustbox` package failed to load}{}}
+\@ifpackageloaded{graphicx}{}{\PackageError{pandoc}{The `graphicx` package failed to load}{}}
+\@ifpackageloaded{svg}{}{\PackageError{pandoc}{The `svg` package failed to load}{}}
+\@ifpackageloaded{hyperref}{}{\PackageError{pandoc}{The `hyperref` package failed to load}{}}
+\@ifpackageloaded{microtype}{}{\PackageError{pandoc}{The `microtype` package failed to load}{}}
+\@ifpackageloaded{pgfplots}{}{\PackageError{pandoc}{The `pgfplots` package failed to load}{}}
+\@ifpackageloaded{url}{}{\PackageError{pandoc}{The `url` package failed to load}{}}
+\@ifpackageloaded{parskip}{}{\PackageError{pandoc}{The `parskip` package failed to load}{}}
+\makeatother
+
+% ----------------------------------------------------------------------
+% Graphics Configuration
+% ----------------------------------------------------------------------
+$if(graphics)$
+  \usepackage{graphicx} % Image handling (PNG, JPG, PDF)
+  \makeatletter
+  \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+  \def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+  \makeatother
+  % Scale images if necessary, so that they will not overflow the page
+  % margins by default, and it is still possible to overwrite the defaults
+  % using explicit options in \includegraphics[width, height, ...]{}
+  \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+  % Set default figure placement to htbp
+  \makeatletter
+  % Make use of float-package and set default placement for figures to H.
+  % The option H means 'PUT IT HERE' (as opposed to the standard h option which means 'You may put it here if you like').
+  \usepackage{float}
+  \floatplacement{figure}{$if(float-placement-figure)$$float-placement-figure$$else$H$endif$}
+  \makeatother
+
+  % Error Handling for graphicx and float
+  \makeatletter
+  \@ifpackageloaded{graphicx}{}{\PackageError{pandoc}{The `graphicx` package failed to load}{}}
+  \@ifpackageloaded{float}{}{\PackageError{pandoc}{The `float` package failed to load}{}}
+  \makeatother
+$endif$
+
+% ----------------------------------------------------------------------
+% Line Spacing Configuration
+% ----------------------------------------------------------------------
+
+$if(linestretch)$
+\usepackage{setspace}
+$else$
+% Use setspace anyway because we change the default line spacing.
+% The spacing is changed early to affect the titlepage and the TOC.
+\usepackage{setspace}
+\setstretch{1.2}
+$endif$
+
+% ----------------------------------------------------------------------
+% Font Settings
+% ----------------------------------------------------------------------
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[$if(fontenc)$$fontenc$$else$T1$endif$]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  $if(mathspec)$
+    \ifXeTeX
+      \usepackage{mathspec} % this also loads fontspec
+    \else
+      \usepackage{unicode-math} % this also loads fontspec
+    \fi
+  $else$
+    \usepackage{unicode-math} % this also loads fontspec
+  $endif$
+  \defaultfontfeatures{Scale=MatchLowercase} % must come before Beamer theme
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+
+% ----------------------------------------------------------------------
+% Default Font
+% ----------------------------------------------------------------------
+$if(fontfamily)$
+$else$
+  \usepackage{lmodern}
+$endif$
+
+% ----------------------------------------------------------------------
+% Beamer Theme Settings
+% ----------------------------------------------------------------------
+$if(beamer)$
+  $if(theme)$
+    \usetheme[$for(themeoptions)$$themeoptions$$sep$,$endfor$]{$theme$}
+$endif$
+  $if(colortheme)$
+    \usecolortheme{$colortheme$}
+  $endif$
+  $if(fonttheme)$
+    \usefonttheme{$fonttheme$}
+  $endif$
+  $if(mainfont)$
+    \usefonttheme{serif} % use mainfont rather than sansfont for slide text
+  $endif$
+  $if(innertheme)$
+    \useinnertheme{$innertheme$}
+  $endif$
+  $if(outertheme)$
+    \useoutertheme{$outertheme$}
+  $endif$
+$endif$
+
+% ----------------------------------------------------------------------
+% Font and Language Settings
+% ----------------------------------------------------------------------
+$if(lang)$
+  % Load babel with bidi support
+  \ifLuaTeX
+    \usepackage[bidi=basic]{babel} 
+  \else
+    \usepackage[bidi=default]{babel}
+  \fi
+  \babelprovide[main,import]{$lang$} % Set main document language
+
+
+  % ----------------------------------------------------------------------
+  % Language-Specific Font Adjustments
+  % ----------------------------------------------------------------------
+
+  \ifLuaTeX
+    \usepackage{luatextra} % For LuaLaTeX-specific font adjustments
+  \fi
+
+  % Chinese (Simplified and Traditional)
+  \ifnum\pdfstrcmp{$lang$}{zh}=0 
+    \ifPDFTeX
+      \usepackage{xeCJK}
+    \fi
+    \setCJKmainfont{Noto Serif CJK SC}
+    \setCJKsansfont{Noto Sans CJK SC}
+    \setCJKmonofont{Noto Sans Mono CJK SC}
+  \fi
+
+  % Japanese
+  \ifnum\pdfstrcmp{$lang$}{ja}=0
+    \ifPDFTeX
+      \usepackage{xeCJK}
+    \fi
+    \setCJKmainfont{Noto Serif CJK JP}
+    \setCJKsansfont{Noto Sans CJK JP}
+    \setCJKmonofont{Noto Sans Mono CJK JP}
+  \fi
+
+  % Korean
+  \ifnum\pdfstrcmp{$lang$}{ko}=0
+    \ifPDFTeX
+      \usepackage{xeCJK}
+    \fi
+    \setCJKmainfont{Noto Serif CJK KR}
+    \setCJKsansfont{Noto Sans CJK KR}
+    \setCJKmonofont{Noto Sans Mono CJK KR}
+  \fi
+
+  % Hindi (Devanagari)
+  \ifnum\pdfstrcmp{$lang$}{hi}=0
+    \ifPDFTeX
+      \usepackage{devanagari}
+    \else
+      \newfontfamily\devanagarifont[Script=Devanagari]{Lohit Devanagari}
+    \fi
+  \fi
+
+  % Arabic
+  \ifnum\pdfstrcmp{$lang$}{ar}=0
+    \ifPDFTeX
+      \usepackage[arabic]{babel}
+    \else
+      \newfontfamily\arabicfont[Script=Arabic]{Amiri}
+      \setotherlanguage{arabic}
+    \fi
+  \fi
+
+  % Russian
+  \ifnum\pdfstrcmp{$lang$}{ru}=0
+    \ifPDFTeX
+      \usepackage[russian]{babel}
+    \else
+      \setotherlanguage{russian}
+    \fi
+  \fi
+
+  % Default & Language-Specific Font Families (with Fallbacks)
+  \ifPDFTeX
+    % PDFLaTeX: Prioritize Latin Modern for its wide availability
+    \newcommand{\defaultMainFont}{lmodern} 
+    \newcommand{\defaultSansFont}{lmss}     % Latin Modern Sans
+    \newcommand{\defaultMonoFont}{lmtt}     % Latin Modern Typewriter
+  \else % LuaLaTeX/XeLaTeX
+    \ifnum\pdfstrcmp{$lang$}{zh}=0 % Chinese (Simplified and Traditional)
+      \newcommand{\defaultMainFont}{Noto Serif CJK SC}
+      \newcommand{\defaultSansFont}{Noto Sans CJK SC}
+      \newcommand{\defaultMonoFont}{Noto Sans Mono CJK SC}
+    \else
+      \ifnum\pdfstrcmp{$lang$}{ja}=0 % Japanese
+        \newcommand{\defaultMainFont}{Noto Serif CJK JP}
+        \newcommand{\defaultSansFont}{Noto Sans CJK JP}
+        \newcommand{\defaultMonoFont}{Noto Sans Mono CJK JP}
+      \else
+        \ifnum\pdfstrcmp{$lang$}{ko}=0 % Korean
+          \newcommand{\defaultMainFont}{Noto Serif CJK KR}
+          \newcommand{\defaultSansFont}{Noto Sans CJK KR}
+          \newcommand{\defaultMonoFont}{Noto Sans Mono CJK KR}
+        \else
+          % Default to high-quality, open-source fonts for other languages
+          \newcommand{\defaultMainFont}{Libertinus Serif}
+          \newcommand{\defaultSansFont}{Libertinus Sans}
+          \newcommand{\defaultMonoFont}{Libertinus Mono}
+        \fi
+      \fi
+    \fi
+  \fi
+
+  % Handle main font (for XeLaTeX/LuaLaTeX) and other babel fonts
+  $if(mainfont)$
+    \ifPDFTeX
+      % For PDFTeX, fonts are handled below, nothing needed here
+    \else
+      \setmainfont[$for(mainfontoptions)$$mainfontoptions$$sep$,$endfor$]{$mainfont$}
+    \fi
+  $endif$
+  
+  % Load babel for other languages (for PDFTeX)
+  $if(babel-otherlangs)$
+    $if(PDFTeX)$
+      $for(babel-otherlangs)$
+        \babelprovide[import]{$babel-otherlangs$}
+      $endfor$
+    $endif$
+  $endif$
+  
+  % Set babel fonts (for PDFTeX)
+  $for(babelfonts/pairs)$
+    \babelfont[$babelfonts.key$]{rm}{$babelfonts.value$}
+  $endfor$
+  
+  % Remove language-specific shorthands
+  \let\LanguageShortHands\languageshorthands
+  \def\languageshorthands#1{}
+$endif$
+
+% ----------------------------------------------------------------------
+% Load Fonts (with Fallbacks)
+% ----------------------------------------------------------------------
+
+\ifPDFTeX
+  \usepackage{\defaultMainFont}
+  \usepackage[scaled]{\defaultSansFont}
+  \renewcommand{\ttdefault}{\defaultMonoFont} % For monospace
+  \usepackage{xeCJK} % Load xeCJK for PDFLaTeX even if lang is not Chinese, Japanese, or Korean
+\else
+  \setmainfont{\defaultMainFont}
+  \setsansfont{\defaultSansFont}
+  \setmonofont{\defaultMonoFont}
+\fi
+
+
+% ----------------------------------------------------------------------
+% Text Direction (XeLaTeX only)
+% ----------------------------------------------------------------------
+
+$if(dir)$
+  \ifXeTeX
+    \newcommand{\setupdir}{
+      \ifnum\pdfstrcmp{$dir$}{rtl}=0
+        \pagedir TRT \bodydir TRT \pardir TRT \textdir TRT
+      \else
+        \pagedir TLT \bodydir TLT \pardir TLT \textdir TLT
+      \fi
+    }
+    \setupdir % Set text direction based on 'dir' variable
+  \fi
+$endif$
+
+% ----------------------------------------------------------------------
+% User Font Settings - Optional Headings Font
+% ----------------------------------------------------------------------
+
+% Define a macro to set title fonts (with error handling and fallback)
+\newcommand{\setheadingsfont}{
+  $if(headingsfont)$ % If headingsfont is specified...
+    \IfFontExistsTF{$headingsfont$}{% If it exists, use it
+      \ifPDFTeX
+        \newcommand{\headingsfontcmd}{\sffamily\usefont{T1}{phv}{m}{n}} % Helvetica for PDFTeX
+      \else
+        \newcommand{\headingsfontcmd}{\sffamily\fontspec{$headingsfont$}}
+      \fi
+    }{% If headingsfont is not found...
+      \PackageWarning{pandoc}{Font '$headingsfont$' not found, using sans font instead}%
+      $if(sansfont)$ % ...and sansfont is specified, use it
+        \newcommand{\headingsfontcmd}{\sffamily\fontspec{$sansfont$}}
+      $else$ % ...otherwise, use default sans font
+        \ifPDFTeX
+          \newcommand{\headingsfontcmd}{\sffamily\usefont{T1}{phv}{m}{n}} % Helvetica for PDFTeX
+        \else
+          \newcommand{\headingsfontcmd}{\sffamily\fontspec{Source Sans Pro}} % Or any other default sans-serif font
+        \fi
+      $endif$
+    }
+  $else$ % If headingsfont is not specified...
+    $if(sansfont)$ % ...and sansfont is specified, use it
+      \newcommand{\headingsfontcmd}{\sffamily\fontspec{$sansfont$}}
+    $else$ % ...otherwise, use default sans font
+      \ifPDFTeX
+        \newcommand{\headingsfontcmd}{\sffamily\usefont{T1}{phv}{m}{n}} % Helvetica for PDFTeX
+      \else
+        \newcommand{\headingsfontcmd}{\sffamily\fontspec{Source Sans Pro}} % Or any other default sans-serif font
+      \fi
+    $endif$
+  $endif$
+}
+
+% Load titlesec for heading customization
+\usepackage{titlesec}
+
+% Set up headings (with error handling)
+\setheadingsfont % Call the macro to set the font
+\titleformat{\section}[block]{\Huge\headingsfontcmd}{\thesection}{1em}{}
+\titleformat{\subsection}[block]{\huge\headingsfontcmd}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}[block]{\LARGE\headingsfontcmd}{\thesubsubsection}{1em}{}
+\titleformat{\paragraph}[block]{\Large\headingsfontcmd}{\theparagraph}{1em}{}
+\titleformat{\subparagraph}[block]{\large\headingsfontcmd}{\thesubparagraph}{1em}{}
+
+\makeatletter
+\@ifpackageloaded{titlesec}{}{\PackageError{pandoc}{The `titlesec` package failed to load}{}}
+\makeatother
+
+% ----------------------------------------------------------------------
+% Zero-Width Non-Joiner Support (for languages like Persian, Hindi)
+% ----------------------------------------------------------------------
+
+$if(zero-width-non-joiner)$
+  \makeatletter
+  \def\zerowidthnonjoiner{%
+    \texorpdfstring{%
+      \TextOrMath{\nobreak\discretionary{-}{}{\kern.03em}%
+        \ifvmode\else\nobreak\hskip\z@skip\fi}{}%
+    }{}%
+  }
+  \makeatother
+  \ifPDFTeX
+    \DeclareUnicodeCharacter{200C}{\zerowidthnonjoiner}
+  \else
+    \catcode`^^^^200c=\active
+    \protected\def ^^^^200c{\zerowidthnonjoiner}
+  \fi
+$endif$
+
+% ----------------------------------------------------------------------
+% Miscellaneous Settings
+% ----------------------------------------------------------------------
+
+$if(verbatim)$
+  \ifPDFTeX
+    \IfFileExists{upquote.sty}{\usepackage{upquote}}{} % Upright quotes in verbatim environments (PDFLaTeX)
+    \makeatletter
+    \@ifpackageloaded{upquote}{}{\PackageError{pandoc}{The `upquote` package failed to load}{}}
+    \makeatother
+  \fi
+$endif$
+
+\IfFileExists{microtype.sty}{%
+  \usepackage[$for(microtypeoptions)$$microtypeoptions$$sep$,$endfor$]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % Disable protrusion for monospace fonts in math mode
+}{}
+
+$if(indent)$
+$else$
+  \makeatletter
+  \@ifundefined{KOMAClassName}{% if non-KOMA class
+    \IfFileExists{parskip.sty}{%
+      \usepackage{parskip}
+      \@ifpackageloaded{parskip}{}{\PackageError{pandoc}{The `parskip` package failed to load}{}}
+    }{% else
+      \setlength{\parindent}{0pt}
+      \setlength{\parskip}{6pt plus 2pt minus 1pt}
+    }
+  }{% if KOMA class
+    \KOMAoptions{parskip=half}
+  }
+  \makeatother
+$endif$
+
+% ----------------------------------------------------------------------
+% Define some helper functions (especially for internationalization)
+% ----------------------------------------------------------------------
+
+\IfFileExists{xstring.sty}{%
+  \usepackage{xstring}
+  \makeatletter
+  \@ifpackageloaded{xstring}{}{\PackageError{pandoc}{The `xstring` package failed to load}{}}
+  \makeatother
+}{}
+
+\makeatletter
+\newcommand{\textls}[2][t]{%
+\ifx\protect\@typeset@protect\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+{\expandafter\ifx\csname MakeLowercase\endcsname\relax
+\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+{#1}{#2}}%
+{\lowercase{#2}}%
+}
+\makeatother
+
+\ifdefined\HCode
+\usepackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{00A0}{\nobreakspace} % Replace non-breaking space with regular space
+\else
+\usepackage[utf8x]{inputenc}
+\fi
+\ifLuaTeX
+  \usepackage{luatextra}
+  \makeatletter
+  \@ifpackageloaded{luatextra}{}{\PackageError{pandoc}{The `luatextra` package failed to load}{}}
+  \makeatother
+\fi
+
+
+% ----------------------------------------------------------------------
+% Title Block Font
+% ----------------------------------------------------------------------
+
+$if(titlepage)$
+  % Define colors for the title block only if titlepage is enabled
+  \definecolor{titlepage-text-color}{RGB}{$if(titlepage-text-color)$$titlepage-text-color$$else$0.37,0.37,0.37$endif$} % Default: Dark gray
+  \definecolor{titlepage-rule-color}{RGB}{$if(titlepage-rule-color)$$titlepage-rule-color$$else$0.26,0.33,0.54$endif$} % Default: Blue
+$endif$
+
+% ----------------------------------------------------------------------
+% Page Layout and Geometry
+% ----------------------------------------------------------------------
+
+\usepackage[
+  $if(draft)$
+    draft,
+  $endif$
+  $if(papersize)$$papersize$paper,$endif$ % Set paper size if specified
+  $if(papersize)$$else$a4paper,$endif$ % Default to A4 if not specified
+  margin=2.5cm,$for(geometry)$$geometry$$sep$,$endfor$
+  includehead=true,includefoot=true,centering
+]{geometry}
+
+% ----------------------------------------------------------------------
+% Document Metadata (Title, Author, Date)
+% ----------------------------------------------------------------------
+$if(beamer)$
+$else$
+\usepackage{titling} % For title page customization
+\pretitle{\begin{center}\LARGE\scshape} % Format before the title
+\posttitle{\par\end{center}\vskip 0.5em} % Format after the title
+\preauthor{\begin{center}\large\itshape} % Format before the author
+\postauthor{\par\end{center}} % Format after the author
+\predate{\begin{center}\small} % Format before the date
+\postdate{\par\end{center}} % Format after the date
+
+\title{$title$$if(thanks)$\thanks{$thanks$}$endif$} % Include thanks if present
+\author{$for(author)$$author$$sep$, $endfor$}
+\date{$date$}
+$endif$
+
+% Physical and logical Colors Definitions
+% ----------------------------------------------------------------------
+\definecolor{Maroon}{RGB}{173, 34, 59}  % HTML: ad223b
+\definecolor{Blue}{RGB}{34, 58, 173}    % HTML: 223bad
+\definecolor{Orange}{RGB}{240, 133, 31}  % HTML: f0851f
+\definecolor{Green}{RGB}{112, 173, 34}   % HTML: 70ad22
+\definecolor{Gray}{RGB}{110, 110, 110}   % HTML: 6e6e6e
+\definecolor{LightGray}{RGB}{242, 242, 242} % HTML: f2f2f2
+\definecolor{White}{RGB}{255, 255, 255}  % HTML: ffffff
+
+\definecolor{TitleColor}{RGB}{$if(title-color)$title-color$else$165, 0, 0$endif$} % color of the title (Default: A50000)
+\definecolor{SubTitleColor}{RGB}{$if(subtitle-color)$subtitle-color$else$95, 95, 95$endif$} % color of the subtitle (Default: 5F5F5F)
+\definecolor{RuleColor}{RGB}{$if(rule-color)$rule-color$else$67, 84, 136$endif$} % color of the rule on the title page (Default: 435488)
+\definecolor{TextColor}{RGB}{$if(text-color)$text-color$else$95, 95, 95$endif$} % color of all the text on the title page (Default: 5F5F5F)
+\definecolor{LinkColor}{RGB}{$if(linkcolor)$linkcolor$else$64, 119, 192$endif$} % color of all the links in the document (Default: 4077C0)
+
+% ----------------------------------------------------------------------
+% Blockquote Styling
+% ----------------------------------------------------------------------
+$if(blockquote)$
+\usepackage{mdframed}
+\newmdenv[%
+  skipabove=1em,
+  skipbelow=1em,
+  leftmargin=0.5em,
+  rightmargin=0.5em,
+  backgroundcolor=gray!10,
+  linecolor=gray!50,
+  linewidth=1pt
+]{customblockquote}
+\renewenvironment{quote}{\begin{customblockquote}}{\end{customblockquote}}
+
+% Error Handling for mdframed
+\makeatletter
+\@ifpackageloaded{mdframed}{}{\PackageError{pandoc}{The `mdframed` package failed to load}{}}
+\makeatother
+$endif$
+
+% ----------------------------------------------------------------------
+% Caption Styling
+% ----------------------------------------------------------------------
+\definecolor{CaptionColor}{RGB}{$if(caption-color)$caption-color$else$119, 119, 119$endif$} % color of all the captions in the document (Default: 777777)
+
+$if(beamer)$
+  % Caption font size in Beamer
+  $if(caption-font-size)$
+  \setbeamerfont{caption}{size={$caption-font-size$}}
+  $endif$
+
+  % Table caption position
+  $if(table-captions-above)$
+  \setbeamertemplate{caption}[above]
+  $endif$
+
+  % Figure caption position
+  $if(fig-captions-above)$
+  \setbeamertemplate{caption}[above]
+  $endif$
+$else$
+  \usepackage[
+    font={stretch=1.2,$if(caption-font-size)$size=$caption-font-size$,$endif$},
+    textfont={color=CaptionColor}, % Use the defined CaptionColor
+    position=top,
+    skip=4mm,
+    labelfont=bf,
+    singlelinecheck=false,
+    justification=$if(caption-justification)$$caption-justification$$else$raggedright$endif$
+  ]{caption}
+  \setcapindent{0em} % Remove indentation for captions
+$endif$
+
+% ----------------------------------------------------------------------
+% Heading Color
+% ----------------------------------------------------------------------
+
+\definecolor{heading-color}{HTML}{$if(heading-color)$$heading-color$$else$282828$endif$} % Default: Dark gray
+
+$if(beamer)$
+  \setbeamercolor{section in head/foot}{fg=heading-color, bg=White}
+$else$
+  \addtokomafont{section}{\color{heading-color}} % Apply color to section headings
+$endif$
+
+% ----------------------------------------------------------------------
+% Paragraph Formatting
+% ----------------------------------------------------------------------
+
+\setlength{\parindent}{0pt} % No paragraph indentation
+\setlength{\parskip}{6pt plus 2pt minus 1pt} % Add space between paragraphs
+\setlength{\emergencystretch}{3em} % Prevent overfull lines
+
+$if(page-background)$
+  \usepackage{pagecolor}
+  \definecolor{page-background}{HTML}{$page-background$}
+  \pagecolor{page-background}
+  \makeatletter
+  \@ifpackageloaded{pagecolor}{}{\PackageError{pandoc}{The `pagecolor` package failed to load}{}}
+  \makeatother
+$endif$
+
+% ----------------------------------------------------------------------
+% Custom Lists
+% ----------------------------------------------------------------------
+
+$if(compact-lists)$
+  \setlist{noitemsep, topsep=0pt} % Reduce spacing between list items
+$endif$
+
+$if(lists-without-bullets)$
+  \renewcommand{\labelitemi}{} % Remove bullets from itemize lists
+  \renewcommand{\labelitemii}{} % Remove bullets from nested itemize lists
+$endif$
+
+% ----------------------------------------------------------------------
+% Code Listings Configuration (Conditional)
+% ----------------------------------------------------------------------
+$if(listings)$
+\newcommand{\passthrough}[1]{#1}
+\lstset{defaultdialect=[5.3]Lua}
+\lstset{defaultdialect=[x86masm]Assembler}
+
+$if(listings-lang)$
+\lstset{language=[$listings-lang$]$listings-lang$}
+$endif$
+
+% General listing colors
+\definecolor{listing-background}{HTML}{F7F7F7}
+\definecolor{listing-rule}{HTML}{B3B2B3}
+\definecolor{listing-numbers}{HTML}{B3B2B3}
+\definecolor{listing-text-color}{HTML}{000000}
+\definecolor{listing-keyword}{HTML}{435489}
+\definecolor{listing-keyword-2}{HTML}{1284CA}
+\definecolor{listing-keyword-3}{HTML}{9137CB}
+\definecolor{listing-identifier}{HTML}{435489}
+\definecolor{listing-string}{HTML}{00999A}
+\definecolor{listing-comment}{HTML}{8E8E8E}
+
+\lstdefinestyle{eisvogel_listing_style}{
+  language         = java,
+$if(listings-disable-line-numbers)$
+  xleftmargin      = 0.6em,
+  framexleftmargin = 0.4em,
+$else$
+  numbers          = left,
+  xleftmargin      = 2.7em,
+  framexleftmargin = 2.5em,
+$endif$
+  backgroundcolor  = \color{listing-background},
+  basicstyle       = \color{listing-text-color}\linespread{1.0}%
+                      \lst@ifdisplaystyle%
+                      $if(code-block-font-size)$$code-block-font-size$$else$\small$endif$%
+                      \fi\ttfamily{},
+  breaklines       = true,
+  frame            = single,
+  framesep         = 0.19em,
+  rulecolor        = \color{listing-rule},
+  frameround       = ffff,
+  tabsize          = 4,
+  numberstyle      = \color{listing-numbers},
+  aboveskip        = 1.0em,
+  belowskip        = 0.1em,
+  abovecaptionskip = 0em,
+  belowcaptionskip = 1.0em,
+  keywordstyle     = {\color{listing-keyword}\bfseries},
+  keywordstyle     = {[2]\color{listing-keyword-2}\bfseries},
+  keywordstyle     = {[3]\color{listing-keyword-3}\bfseries\itshape},
+  sensitive        = true,
+  identifierstyle  = \color{listing-identifier},
+  commentstyle     = \color{listing-comment},
+  stringstyle      = \color{listing-string},
+  showstringspaces = false,
+  escapeinside     = {/*@}{@*/}, % Allow LaTeX inside these special comments
+  literate         =
+  {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+  {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+  {à}{{\`a}}1 {è}{{\'e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+  {À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+  {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+  {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+  {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+  {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+  {œ}{{\oe}}1 {Œ}{{\OE}}1 {æ}{{\ae}}1 {Æ}{{\AE}}1 {ß}{{\ss}}1
+  {ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1 {å}{{\r a}}1 {Å}{{\r A}}1
+  {€}{{\EUR}}1 {£}{{\pounds}}1 {«}{{\guillemotleft}}1
+  {»}{{\guillemotright}}1 {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {¿}{{?`}}1
+  {…}{{\ldots}}1 {≥}{{>=}}1 {≤}{{<=}}1 {„}{{\glqq}}1 {“}{{\grqq}}1
+  {”}{{''}}1
+}
+\lstset{style=eisvogel_listing_style}
+
+% Java Language Definition
+\lstdefinelanguage{Java}{
+  morekeywords={
+    abstract,assert,break,case,catch,class,continue,default,
+    do,else,enum,exports,extends,final,finally,for,if,implements,
+    import,instanceof,interface,module,native,new,package,private,
+    protected,public,requires,return,static,strictfp,super,switch,
+    synchronized,this,throw,throws,transient,try,volatile,while,
+    var % 'var' is an identifier
+  },
+  morekeywords={[2] % Data types
+    boolean,byte,char,double,float,int,long,short,
+    String,
+    Boolean,Byte,Character,Double,Float,Integer,Long,Short,
+    Number,AtomicInteger,AtomicLong,BigDecimal,BigInteger,DoubleAccumulator,DoubleAdder,LongAccumulator,LongAdder,Short,
+    Object,Void,void
+  },
+  morekeywords={[3] % Literals
+    null,true,false
+  },
+  sensitive=true,
+  morecomment=[l]//,
+  morecomment=[s]{/*}{*/},
+  morecomment=[s]{/**}{*/},
+  morestring=[b]",
+  morestring=[b]'
+}
+
+% XML Language Definition
+\lstdefinelanguage{XML}{
+  morestring      = [b]",
+  moredelim       = [s][\bfseries\color{listing-keyword}]{<}{\ },
+  moredelim       = [s][\bfseries\color{listing-keyword}]{</}{>},
+  moredelim       = [l][\bfseries\color{listing-keyword}]{/>},
+  moredelim       = [l][\bfseries\color{listing-keyword}]{>},
+  morecomment     = [s]{<?}{?>},
+  morecomment     = [s]{},
+  commentstyle    = \color{listing-comment},
+  stringstyle     = \color{listing-string},
+  identifierstyle = \color{listing-identifier}
+}
+$endif$
+% ----------------------------------------------------------------------
+% Code Listings Configuration (Conditional)
+% ----------------------------------------------------------------------
+
+$if(listings)$
+\newcommand{\passthrough}[1]{#1}
+\lstset{defaultdialect=[5.3]Lua}
+\lstset{defaultdialect=[x86masm]Assembler}
+
+$if(listings-lang)$
+\lstset{language=[$listings-lang$]$listings-lang$}
+$endif$
+
+$if(listings-style)$ % Renamed
+\lstset{style=$listings-style$} % Renamed
+$endif$
+
+$if(listings-basicstyle)$ % Renamed
+\lstset{basicstyle=$listings-basicstyle$} % Renamed
+$endif$
+
+$if(listings-keywordstyle)$ % Renamed
+\lstset{keywordstyle=$listings-keywordstyle$} % Renamed
+$endif$
+
+$if(listings-commentstyle)$ % Renamed
+\lstset{commentstyle=$listings-commentstyle$} % Renamed
+$endif$
+
+$if(listings-stringstyle)$ % Renamed
+\lstset{stringstyle=$listings-stringstyle$} % Renamed
+$endif$
+
+$if(listings-numberstyle)$ % Renamed
+\lstset{numberstyle=$listings-numberstyle$} % Renamed
+$endif$
+
+$if(listings-caption)$ % Renamed
+\lstset{caption=$listings-caption$} % Renamed
+$endif$
+
+$if(listings-captionpos)$ % Renamed
+\lstset{captionpos=$listings-captionpos$} % Renamed
+$endif$
+
+$if(listings-frame)$ % Renamed
+\lstset{frame=$listings-frame$} % Renamed
+$endif$
+
+$if(listings-numbers)$ % Renamed
+\lstset{numbers=$listings-numbers$} % Renamed
+$endif$
+
+$if(listings-firstnumber)$ % Renamed
+\lstset{firstnumber=$listings-firstnumber$} % Renamed
+$endif$
+
+$if(listings-stepnumber)$ % Renamed
+\lstset{stepnumber=$code-stepnumber$} % Renamed
+$endif$
+
+$if(listings-backgroundcolor)$
+\lstset{backgroundcolor=$listings-backgroundcolor$}
+$endif$
+
+$if(listings-keywordcolor)$
+\lstset{keywordcolor=$listings-keywordcolor$}
+$endif$
+
+$if(listings-commentcolor)$
+\lstset{commentcolor=$listings-commentcolor$}
+$endif$
+
+$if(listings-stringcolor)$
+\lstset{stringcolor=$listings-stringcolor$}
+$endif$
+
+$if(listings-numbercolor)$
+\lstset{numbercolor=$listings-numbercolor$}
+$endif$
+
+$if(lhs)$
+\lstnewenvironment{code}{\lstset{language=Haskell,basicstyle=\small\ttfamily}}{}
+$endif$
+
+$if(highlighting-macros)$
+$highlighting-macros$
+
+% Workaround/bugfix from jannick0.
+% See https://github.com/jgm/pandoc/issues/4302#issuecomment-360669013)
+% or https://github.com/Wandmalfarbe/pandoc-latex-template/issues/2
+%
+% Redefine the verbatim environment 'Highlighting' to break long lines (with
+% the help of fvextra). Redefinition is necessary because it is unlikely that
+% pandoc includes fvextra in the default template.
+\usepackage{fvextra}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,fontsize=$if(code-block-font-size)$$code-block-font-size$$else$\small$endif$,commandchars=\\\{\}}
+$endif$
+
+$endif$
+
+% ----------------------------------------------------------------------
+% Header and Footer Configuration (Conditional)
+% ----------------------------------------------------------------------
+
+$if(beamer)$ % Do nothing if in beamer mode
+$else$
+  $if(disable-header-and-footer)$ % Do nothing if header and footer are disabled
+  $else$
+    \usepackage[headsepline,footsepline]{scrlayer-scrpage} % KOMA-Script headers/footers
+    \usepackage{lastpage} % For total page count in footer
+
+    \newcommand{\authors}{$for(author)$$author$$sep$, $endfor$}
+    \newcommand{\copyyear}{$date$}
+    \newcommand{\copyrighttext}{$if(copyright)$$copyright$$else$© \copyyear{} by \authors. All rights reserved.$endif$}
+
+    \newpairofpagestyles{eisvogel-header-footer}{
+      \clearpairofpagestyles
+      \ihead*{$if(header-left)$$header-left$$else$$headtitle$$endif$} % Use \headtitle instead of $title$
+      \chead*{$if(header-center)$$header-center$$endif$}
+      \ohead*{$if(header-right)$$header-right$$else$$date$$endif$}
+      \ifoot*{$if(footer-left)$$footer-left$$else$\copyrighttext$endif$}
+      \cfoot*{$if(footer-center)$$footer-center$$endif$}
+      \ofoot*{$if(footer-right)$$footer-right$$else$$pagemark$$endif$} % Use \pagemark instead of \thepage
+      \addtokomafont{pageheadfoot}{\upshape}
+    }
+
+    \pagestyle{eisvogel-header-footer}
+
+    $if(book)$
+      \deftripstyle{ChapterStyle}{}{}{}{}{\pagemark}{}
+      \renewcommand*{\chapterpagestyle}{ChapterStyle}
+    $endif$
+
+    $if(page-background)$
+      \backgroundsetup{
+        scale=1,
+        color=black,
+        opacity=$if(page-background-opacity)$$page-background-opacity$$else$0.2$endif$,
+        angle=0,
+        contents={%
+          \includegraphics[width=\paperwidth,height=\paperheight]{$page-background$}
+        }%
+      }
+    $endif$
+
+    % Error Handling for scrlayer-scrpage
+    \makeatletter
+    \@ifpackageloaded{scrlayer-scrpage}{}{\PackageError{pandoc}{The `scrlayer-scrpage` package failed to load}{}}
+    \makeatother
+  $endif$ % end if(disable-header-and-footer)
+$endif$ % end if(beamer)
+
+% ----------------------------------------------------------------------
+% Hyperlink Setup
+% ----------------------------------------------------------------------
+
+\hypersetup{
+$if(title-meta)$
+  pdftitle={$title-meta$},
+$endif$
+$if(author-meta)$
+  pdfauthor={$author-meta$},
+$endif$
+$if(lang)$
+  pdflang={$lang$},
+$endif$
+$if(subject)$
+  pdfsubject={$subject$},
+$endif$
+$if(keywords)$
+  pdfkeywords={$for(keywords)$$keywords$$sep$, $endfor$},
+$endif$
+$if(colorlinks)$
+  colorlinks=true,
+  linkcolor={$if(linkcolor)$$linkcolor$$else$default-linkcolor$endif$},
+  filecolor={$if(filecolor)$$filecolor$$else$default-filecolor$endif$},
+  citecolor={$if(citecolor)$$citecolor$$else$default-citecolor$endif$},
+  urlcolor={$if(urlcolor)$$urlcolor$$else$default-urlcolor$endif$},
+$else$
+  hidelinks,
+$endif$
+breaklinks=true,
+pdfcreator={LaTeX via pandoc with the Eisvogel template}}
+
+% ----------------------------------------------------------------------
+% Links as Notes
+% ----------------------------------------------------------------------
+$if(links-as-notes)$
+% Make links footnotes instead of hotlinks:
+\renewcommand{\href}[2]{#2\footnote{\url{#1}}}
+$endif$
+
+% ----------------------------------------------------------------------
+% Hypertargets
+% ----------------------------------------------------------------------
+
+$if(hypertarget)$
+  \usepackage{hyperref}
+  \hypersetup{
+    hypertexnames=false, % Do not use TeX section names for hyperlinks
+    $if(PDFTeX)$ pdfencoding=auto, psdextra, $endif$ % Improved PDFTeX Compatibility
+  }
+  $if(beamer)$
+    \newcommand{\hypertarget}[2]{} % Disable hypertargets in Beamer
+  $else$
+    \newcommand{\hypertarget}[2]{\hypertarget{#1}{#2}} % Enable hypertargets for other document classes
+  $endif$
+
+  % Error Handling for hyperref
+  \makeatletter
+  \@ifpackageloaded{hyperref}{}{\PackageError{pandoc}{The `hyperref` package failed to load}{}}
+  \makeatother
+$else$
+  \newcommand{\hypertarget}[2]{#2} % If hypertargets are not enabled, just pass the text through
+$endif$
+
+% ----------------------------------------------------------------------
+% Pandoc Cross References (if enabled)
+% ----------------------------------------------------------------------
+$if(pandoc-crossref)$
+\usepackage{pandoc-crossref} % Cross-references for Pandoc
+\renewcommand{\eqref}[1]{\autoref{#1}} % Use \autoref for equation references
+% Error Handling for pandoc-crossref
+\makeatletter
+\@ifpackageloaded{pandoc-crossref}{}{\PackageError{pandoc}{The `pandoc-crossref` package failed to load}{}}
+\makeatother
+$endif$
+
+% ----------------------------------------------------------------------
+% Figure/Table Counter
+% ----------------------------------------------------------------------
+$if(beamer)$
+$else$
+\usepackage{caption} % Added for caption customization
+$if(table-captions-above)$
+  $if(book)$
+    \makeatletter
+    \renewcommand{\thetable}{\thechapter.\@arabic\c@table}
+    \makeatother
+  $else$
+    \makeatletter
+    \renewcommand{\thetable}{\@arabic\c@table}
+    \makeatother
+  $endif$
+  \captionsetup[table]{position=above}
+$endif$
+
+$if(fig-captions-above)$
+  $if(book)$
+    \makeatletter
+    \renewcommand{\thefigure}{\thechapter.\@arabic\c@figure}
+    \makeatother
+  $else$
+    \makeatletter
+    \renewcommand{\thefigure}{\@arabic\c@figure}
+    \makeatother
+  $endif$
+  \captionsetup[figure]{position=above}
+$endif$
+$endif$
+
+% ----------------------------------------------------------------------
+% Footnote Configuration
+% ----------------------------------------------------------------------
+
+$if(footnotes-pretty)$
+% load footmisc in order to customize footnotes (footmisc has to be loaded before hyperref, cf. https://tex.stackexchange.com/a/169124/144087)
+\usepackage[hang,flushmargin,bottom,multiple]{footmisc}
+\setlength{\footnotemargin}{0.8em} % set space between footnote nr and text
+\setlength{\footnotesep}{\baselineskip} % set space between multiple footnotes
+\setlength{\skip\footins}{0.3cm} % set space between page content and footnote
+\setlength{\footskip}{0.9cm} % set space between footnote and page bottom
+% Error Handling for footmisc
+\makeatletter
+\@ifpackageloaded{footmisc}{}{\PackageError{pandoc}{The `footmisc` package failed to load}{}}
+\makeatother
+$endif$
+
+% add backlinks to footnote references, cf. https://tex.stackexchange.com/questions/302266/make-footnote-clickable-both-ways
+$if(footnotes-disable-backlinks)$
+$else$
+\usepackage{footnotebackref}
+% Error Handling for footnotebackref
+\makeatletter
+\@ifpackageloaded{footnotebackref}{}{\PackageError{pandoc}{The `footnotebackref` package failed to load}{}}
+\makeatother
+$endif$
+% ----------------------------------------------------------------------
+% Float Configuration
+% ----------------------------------------------------------------------
+
+\makeatletter
+\renewcommand{\float@caption@justification}{$if(caption-justification)$$caption-justification$$else$raggedright$endif$}
+\makeatother
+$if(float-placement-table)$
+\floatplacement{table}{$float-placement-table$}
+$endif$
+$if(float-placement-figure)$
+\floatplacement{figure}{$float-placement-figure$}
+$endif$
+
+% ----------------------------------------------------------------------
+% Numbered Sections (if enabled)
+% ----------------------------------------------------------------------
+
+$if(numbersections)$
+  $if(beamer)$
+    \setbeamertemplate{section in toc}[sections numbered]
+  $else$
+    \setcounter{secnumdepth}{5} % Number sections down to subparagraphs
+
+    % Custom numbering styles (merge with your existing code)
+    \renewcommand\thesection{\arabic{section}}
+    \renewcommand\thesubsection{\thesection.\arabic{subsection}}
+    \renewcommand\thesubsubsection{\thesubsection.\arabic{subsubsection}}
+    \renewcommand\theparagraph{\thesubsubsection.\arabic{paragraph}}
+    \renewcommand\thesubparagraph{\theparagraph.\arabic{subparagraph}}
+
+    \counterwithout{section}{chapter} % Remove chapter prefix from section numbers
+    \counterwithout{figure}{chapter} % Remove chapter prefix from figure numbers
+    \counterwithout{table}{chapter} % Remove chapter prefix from table numbers
+  $endif$
+$endif$
+
+% ----------------------------------------------------------------------
+% Miscellaneous Configurations
+% ----------------------------------------------------------------------
+
+\usepackage{etoolbox} % Utility package for LaTeX
+
+% --------------------------------------------- Section Numbering Toggle
+$if(numbersections)$
+$else$ % Remove section numbering if disabled
+  \setcounter{secnumdepth}{-\maxdimen}
+$endif$
+
+% ------------------------------------------------------------ Subfigures
+$if(subfigure)$
+  \usepackage{subcaption}
+  \makeatletter
+  \@ifpackageloaded{subcaption}{}{\PackageError{pandoc}{The `subcaption` package failed to load}{}}
+  \makeatother
+$endif$
+
+% ------------------------------------------------------ Citeproc References
+$if(csl-refs)$
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+  % allow citations to break across lines
+  \let\@cite@ofmt\@firstofone
+  % avoid brackets around text for \cite:
+  \def\@biblabel#1{}
+  \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+  {\begin{list}{}{%
+    \setlength{\itemindent}{0pt}
+    \setlength{\leftmargin}{0pt}
+    \setlength{\parsep}{0pt}
+    % turn on hanging indent if param 1 is 1
+    \ifodd #1
+    \setlength{\leftmargin}{\cslhangindent}
+    \setlength{\itemindent}{-1\cslhangindent}
+    \fi
+    % set entry spacing
+    \setlength{\itemsep}{#2\baselineskip}}}
+  {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+$endif$
+
+
+% ----------------------------------------------------------------------
+% Table of Contents Depth
+% ----------------------------------------------------------------------
+
+$if(toc-depth)$
+  \setcounter{tocdepth}{$toc-depth$} % Set TOC depth if specified
+$else$
+  \setcounter{tocdepth}{2}
+$endif$
+$if(beamer)$
+  \setbeamertemplate{section in toc}[sections numbered]
+$endif$
+
+% ----------------------------------------------------------------------
+% Begin Document
+% ----------------------------------------------------------------------
+
+\begin{document}
+
+% ----------------------------------------------------------------------
+% Title Page Configuration (Conditional)
+% ----------------------------------------------------------------------
+$if(titlepage)$
+  \usepackage{pagecolor} % For background color
+  \usepackage{afterpage} % To restore page color after title page
+
+  $if(titlepage-background)$
+    \IfFileExists{$titlepage-background$}{%
+      \usepackage{tikz} % For background image placement (load only if needed)
+      \newgeometry{left=0cm, right=0cm} % Remove margins for background image
+      \thispagestyle{empty} % No headers/footers on titlepage
+      \begin{tikzpicture}[remember picture,overlay]
+        \node[inner sep=0pt] at (current page.center){\includegraphics[width=\paperwidth,height=\paperheight]{$titlepage-background$}}; % Background image
+      \end{tikzpicture}
+      \clearpage
+      \restoregeometry % Restore margins
+    }{%
+      \PackageWarning{pandoc}{Background image '$titlepage-background$' not found}%
+    }
+  $else$
+    \newgeometry{left=6cm} % Adjust geometry for title page (customize as needed)
+  $endif$
+
+  \begin{titlepage}
+
+    $if(titlepage-color)$
+    \definecolor{titlepage-color}{HTML}{$titlepage-color$}
+    \newpagecolor{titlepage-color}\afterpage{\restorepagecolor} % Set and restore background color
+    $endif$
+
+    \begin{flushleft}
+      \\[-1em] % Adjust vertical spacing as needed
+      \color{titlepage-text-color} % Use the defined titlepage-text-color
+      \makebox[0pt][l]{\colorRule[titlepage-rule-color]{1.3\textwidth}{$if(titlepage-rule-height)$$titlepage-rule-height$$else$4$endif$pt}} % Top rule
+      \par
+      \noindent
+
+      % Title, Subtitle, Author, Date (adjust font sizes and spacing as needed)
+      {\setstretch{1.4}
+      \vfill
+      \noindent {\huge \textbf{\textsf{$title$}}}
+      $if(subtitle)$
+      \vskip 1em
+      {\Large \textsf{$subtitle$}}
+      $endif$
+      \vskip 2em
+      \noindent {\Large \textsf{$for(author)$$author$$sep$, $endfor$}}
+      \vfill}
+
+      % ----------------------------------------------------------------------
+      % Title logo
+      % ----------------------------------------------------------------------
+      $if(titlepage-logo)$
+        \IfFileExists{$titlepage-logo$}{%
+          \noindent
+          \begin{flushleft}
+            $if(titlepage-logo-center)$
+              \begin{center}
+                \includegraphics[width=$if(logo-width)$$logo-width$$else$35mm$endif$]{$titlepage-logo$}
+              \end{center}
+            $else$
+              $if(titlepage-logo-right)$
+                \begin{flushright}
+                  \includegraphics[width=$if(logo-width)$$logo-width$$else$35mm$endif$]{$titlepage-logo$}
+                \end{flushright}
+              $else$
+                \includegraphics[width=$if(logo-width)$$logo-width$$else$35mm$endif$]{$titlepage-logo$}
+          $endif$
+            $endif$
+          \end{flushleft}
+        }{%
+          \PackageWarning{pandoc}{Logo image '$titlepage-logo$' not found}%
+        }
+      $endif$
+
+      \textsf{$date$} % Date (adjust placement as needed)
+    \end{flushleft}
+    
+   \end{titlepage}
+  \restoregeometry % Restore normal geometry after title page
+  \pagenumbering{arabic} % Start page numbering after title page
+$endif$ 
+
+% ----------------------------------------------------------------------
+% Page Numbering (if not Beamer) AND Document Metadata (if no titlepage)
+% ----------------------------------------------------------------------
+$if(beamer)$
+  % No changes needed for Beamer
+$else$
+  $if(titlepage)$
+  $else$
+    \maketitle % Only include if not using titlepage
+  $endif$
+
+  \pagenumbering{$if(pagenumbering)$$pagenumbering$$else$arabic$endif$} % Default to arabic if not specified
+$endif$ 
+
+% ----------------------------------------------------------------------
+% Front Matter and Abstract
+% ----------------------------------------------------------------------
+$if(has-frontmatter)$
+\frontmatter 
+$endif$
+$if(title)$
+  $if(beamer)$
+    \frame{\titlepage}
+  $else$
+    % \maketitle % Comment or remove this line to avoid printing title, subtitle, author, and date on the first page after the title page.
+  $endif$
+  $if(abstract)$
+    \begin{abstract}
+    $abstract$
+    \end{abstract}
+  $endif$
+$endif$
+
+$if(first-chapter)$
+  \ifnum\pdfstrcmp{$first-chapter$}{0}>0 % Check if first-chapter is a positive number
+    \setcounter{chapter}{$first-chapter$}
+    \addtocounter{chapter}{-1}  
+  \else
+    \PackageWarning{pandoc}{Invalid value for 'first-chapter'. Using default chapter numbering.}
+  \fi
+$endif$
+% ----------------------------------------------------------------------
+% Includes Before Main Content
+% ----------------------------------------------------------------------
+$for(include-before)$
+$include-before$
+$endfor$
+
+% ----------------------------------------------------------------------
+% Table of Contents
+% ----------------------------------------------------------------------
+$if(toc)$
+  $if(toc-title)$
+    \renewcommand*\contentsname{$toc-title$}
+  $endif$
+  
+  $if(beamer)$
+    \begin{frame}[allowframebreaks]
+      $if(toc-title)$
+        \frametitle{$toc-title$}
+      $endif$
+      \tableofcontents[hideallsubsections]
+    \end{frame}
+    $if(toc-own-page)$
+      \newpage
+    $endif$
+  $else$
+    \begingroup % Limit the scope of link color changes
+      $if(colorlinks)$
+        \hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$default-linkcolor$endif$}
+      $endif$
+      \setcounter{tocdepth}{$if(toc-depth)$$toc-depth$$else$2$endif$}
+      \tableofcontents 
+    \endgroup
+    $if(toc-own-page)$
+      \newpage
+    $endif$
+  $endif$
+$endif$
+
+% ----------------------------------------------------------------------
+% Lists of Figures and Tables
+% ----------------------------------------------------------------------
+
+$if(lof)$
+  \listoffigures
+$endif$
+
+$if(lot)$
+  \listoftables
+$endif$
+
+% ----------------------------------------------------------------------
+% Line Spacing (Conditional)
+% ----------------------------------------------------------------------
+
+$if(linestretch)$
+  \setstretch{$linestretch$} % Set line spacing if specified
+$endif$
+
+% ----------------------------------------------------------------------
+% Front Matter and Main/Back Matter
+% ----------------------------------------------------------------------
+
+$if(has-frontmatter)$
+\frontmatter
+$endif$
+
+$body$ % The main content of the document
+
+$if(has-frontmatter)$
+\backmatter
+$endif$
+
+% ----------------------------------------------------------------------
+% Bibliography Handling
+% ----------------------------------------------------------------------
+
+% Natbib
+$if(natbib)$
+  $if(bibliography)$
+    $if(biblio-title)$
+      $if(has-chapters)$
+        \renewcommand\bibname{$biblio-title$} % Rename bibliography section in books
+      $else$
+        \renewcommand\refname{$biblio-title$} % Rename bibliography section in articles
+      $endif$
+    $endif$
+
+    $if(beamer)$
+      \begin{frame}[allowframebreaks]{$biblio-title$}
+        \bibliographytrue 
+        $if(bib-style)$
+          \bibliographystyle{$bib-style$}
+        $endif$
+      $endif$
+      \bibliography{$for(bibliography)$$bibliography$$sep$,$endfor$}
+      $if(beamer)$
+      \end{frame}
+      $endif$
+  $endif$
+$endif$
+
+% Biblatex
+$if(biblatex)$
+  $if(beamer)$
+    \begin{frame}[allowframebreaks]{$biblio-title$}
+      \bibliographytrue
+      \printbibliography[heading=none]
+    \end{frame}
+  $else$
+    \printbibliography$if(biblio-title)$[title=$biblio-title$]$endif$
+  $endif$
+$endif$
+
+% ----------------------------------------------------------------------
+% Includes After Main Content
+% ----------------------------------------------------------------------
+$for(include-after)$
+$include-after$
+$endfor$
+
+\end{document}
