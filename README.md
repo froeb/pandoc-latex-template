@@ -4,7 +4,7 @@ This is a forked and enhanced version of the Eisvogel LaTeX template for Pandoc.
 
 ## Key Features
 
-   **Enhanced Font Handling:**
+*   **Enhanced Font Handling:**
     *   Improved support for non-Western European alphabets (e.g., CJK, Devanagari, Arabic).
     *   Better compatibility with PDFTeX, offering high-quality font options even for this engine.
     *   Intelligent font fallbacks to ensure your document always looks its best.
